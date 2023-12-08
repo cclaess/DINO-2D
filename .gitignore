@@ -1,0 +1,16 @@
+.idea/
+**/__pychache__/
+
+pod.yaml
+run.sh
+docker/
+
+eval_copy_detection.py
+eval_image_retrieval.py
+eval_knn.py
+eval_linear.py
+eval_video_segmentation.py
+hubconf.py
+run_with_submitit.py
+video_generation.py
+visualize_attention.py
