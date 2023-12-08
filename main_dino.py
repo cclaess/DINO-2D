@@ -130,7 +130,7 @@ def train_dino(args):
     transform = transforms.Compose([
         transforms.LoadImage(image_only=True),
         transforms.EnsureChannelFirst(channel_dim="no_channel"),
-        transforms.Orientation(as_closest_canonical=False),
+        transforms.Orientation(axcodes='RAS'),
         transforms.ScaleIntensityRange(a_min=-100, a_max=300, b_min=0, b_max=1, clip=True),
     ])
     transform = transform.set_random_state(args.seed)
