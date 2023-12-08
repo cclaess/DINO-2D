@@ -357,8 +357,8 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
         metric_logger.update(wd=optimizer.param_groups[0]["weight_decay"])
 
         if utils.is_main_process():
-            global_img_grid = make_grid([(image[0, :, :, :, 112].cpu() * 400) - 100 for image in images[:2]])
-            local_img_grid = make_grid([(image[0, :, :, :, 48].cpu() * 400) - 100 for image in images[2:]])
+            global_img_grid = make_grid([(image[0, :, :, :].cpu() * 400) - 100 for image in images[:2]])
+            local_img_grid = make_grid([(image[0, :, :, :].cpu() * 400) - 100 for image in images[2:]])
             wandb.log({
                 'dino loss': loss.item(),
                 'learning rate': optimizer.param_groups[0]["lr"],
