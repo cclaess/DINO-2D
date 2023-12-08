@@ -436,7 +436,7 @@ class DataAugmentationDINO(object):
 
         # transformation for the global crops
         self.global_transform = transforms.Compose([
-            transforms.RandRotate(range_x=math.pi, prob=1., keep_size=True),
+            transforms.RandRotate(range_x=math.pi * (15 / 180), prob=1., keep_size=True),
             transforms.RandScaleCrop(roi_scale=global_crops_scale[0], max_roi_scale=global_crops_scale[1],
                                      random_size=True, random_center=True),
             transforms.Resize(spatial_size=(224, 224), mode='bicubic'),
@@ -447,7 +447,7 @@ class DataAugmentationDINO(object):
         # transformation for the local small crops
         self.local_crops_number = local_crops_number
         self.local_transform = transforms.Compose([
-            transforms.RandRotate(range_x=math.pi, prob=1., keep_size=True),
+            transforms.RandRotate(range_x=math.pi * (15 / 180), prob=1., keep_size=True),
             transforms.RandScaleCrop(roi_scale=local_crops_scale[0], max_roi_scale=local_crops_scale[1],
                                      random_size=True, random_center=True),
             transforms.Resize(spatial_size=(96, 96), mode='bicubic'),
