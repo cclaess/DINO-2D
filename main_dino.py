@@ -129,7 +129,7 @@ def train_dino(args):
     transform = transforms.Compose([
         transforms.LoadImage(image_only=True),
         transforms.EnsureChannelFirst(channel_dim="no_channel"),
-        transforms.Orientation(axcodes='RAS'),
+        transforms.Orientation(axcodes='RA'),
         transforms.ScaleIntensityRange(a_min=-100, a_max=300, b_min=0, b_max=1, clip=True),
         transforms.RandRotate90(prob=0.75, spatial_axes=(0, 1)),
         transforms.RandFlip(prob=0.5, spatial_axis=0),
