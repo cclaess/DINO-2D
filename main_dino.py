@@ -108,6 +108,10 @@ def get_args_parser():
     parser.add_argument('--output_dir', default=".", type=str, help='Path to save logs and checkpoints.')
     parser.add_argument('--saveckp_freq', default=20, type=int, help='Save checkpoint every x epochs.')
     parser.add_argument('--seed', default=0, type=int, help='Random seed.')
+    parser.add_argument('--pretrained', type=utils.bool_flag, default=False, help="""Use a pretrained model.""")
+    parser.add_argument('--pretrained_weights', default='', type=str, help="""Path to pretrained weights to start 
+        from.""")
+    parser.add_argument('--checkpoint_key', default='teacher', type=str, help="""Key to use in the checkpoint.""")
     parser.add_argument('--num_workers', default=10, type=int, help='Number of data loading workers per GPU.')
     parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
         distributed training; see https://pytorch.org/docs/stable/distributed.html""")
@@ -166,16 +170,20 @@ def train_dino(args):
     # if the network is a Vision Transformer (i.e. vit_tiny, vit_small, vit_base, vit_large, vit_huge)
     if args.arch in vits.__dict__.keys():
         student = vits.__dict__[args.arch](
-            in_chans=1,
+            in_chans=3,
             patch_size=args.patch_size,
             drop_path_rate=args.drop_path_rate)  # stochastic depth
         teacher = vits.__dict__[args.arch](
-            in_chans=1,
+            in_chans=3,
             patch_size=args.patch_size)
         embed_dim = student.embed_dim
     else:
         print(f"Unknow architecture: {args.arch}")
         sys.exit(1)
+
+    if args.pretrained:
+        utils.load_pretrained_weights(student, args.pretrained_weights, args.checkpoint_key, args.arch, args.patch_size)
+        utils.load_pretrained_weights(teacher, args.pretrained_weights, args.checkpoint_key, args.arch, args.patch_size)
 
     # multi-crop wrapper handles forward with inputs of different resolutions
     student = utils.MultiCropWrapper(
@@ -318,7 +326,7 @@ def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loade
                 param_group["weight_decay"] = wd_schedule[it]
 
         # move images to gpu
-        images = [im.cuda(non_blocking=True) for im in images]
+        images = [im.repeat(1, 3, 1, 1).cuda(non_blocking=True) for im in images]
         # teacher and student forward passes + compute dino loss
         with torch.cuda.amp.autocast(fp16_scaler is not None):
             teacher_output = teacher(images[:2])  # only the 2 global views pass through the teacher
