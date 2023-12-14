@@ -144,11 +144,26 @@ def train_dino(args):
         DataAugmentationDINO(args.global_crops_scale, args.local_crops_scale, args.local_crops_number, args.seed),
     ])
 
+    transform_new = transforms.Compose([
+        transforms.LoadImaged(keys='image', image_only=True),
+        transforms.EnsureChannelFirstd(keys='image', channel_dim="no_channel"),
+        transforms.Orientationd(keys='image', axcodes='RA'),
+        transforms.ScaleIntensityRanged(keys='image', a_min=-100, a_max=300, b_min=0, b_max=1, clip=True),
+        transforms.RandRotate90d(keys='image', prob=0.75, spatial_axes=(0, 1)),
+        transforms.RandFlipd(keys='image', prob=0.5, spatial_axis=0),
+        transforms.RandFlipd(keys='image', prob=0.5, spatial_axis=1),
+    ])
+    transform_new = transform_new.set_random_state(args.seed)
+    transform_new = transforms.Compose([
+        transform_new,
+        DataAugmentationDINOnew(args.global_crops_scale, args.local_crops_scale, args.local_crops_number, args.seed),
+    ])
+
     images = glob(os.path.join(args.data_path, '*.nii.gz'))
 
     dataset = data.Dataset(
         data=images,
-        transform=transform,
+        transform=transform_new,
     )
     sampler = data.DistributedSampler(dataset, shuffle=True)
     loader = data.DataLoader(
@@ -463,7 +478,6 @@ class DataAugmentationDINO(object):
             transforms.RandScaleCrop(roi_scale=local_crops_scale[0], max_roi_scale=local_crops_scale[1],
                                      random_size=True, random_center=True),
             transforms.Resize(spatial_size=(96, 96), mode='bicubic'),
-
         ])
         self.local_transform = self.local_transform.set_random_state(seed)
 
@@ -473,6 +487,43 @@ class DataAugmentationDINO(object):
         crops.append(self.global_transform(image))
         for _ in range(self.local_crops_number):
             crops.append(self.local_transform(image))
+        return crops
+
+
+class DataAugmentationDINOnew(object):
+    def __init__(self, global_crops_scale, local_crops_scale, local_crops_number, seed=0):
+
+        # transformation for the global crops
+        self.global_transform = transforms.Compose([
+            transforms.RandRotated(keys='image', range_x=math.pi * (15 / 180), prob=1., keep_size=True),
+            transforms.RandScaleCropd(keys='image', roi_scale=global_crops_scale[0], max_roi_scale=global_crops_scale[1],
+                                      random_size=True, random_center=True),
+            transforms.Resized(keys='image', spatial_size=(224, 224), mode='bicubic'),
+
+        ])
+        self.global_transform = self.global_transform.set_random_state(seed)
+
+        # transformation for the local small crops
+        self.local_crops_number = local_crops_number
+        self.local_transform = transforms.Compose([
+            transforms.ForegroundMaskd(keys='image', threshold='otsu', invert=True, new_key_prefix='mask'),
+            transforms.RandRotated(keys=['image', 'mask'], range_x=math.pi * (15 / 180), prob=1., keep_size=True),
+            transforms.RandCropByPosNegLabeld(keys='image', label_key='mask', spatial_size=(205, 205), pos=1., neg=0.,),
+            transforms.DeleteItemsd(keys='mask'),
+            transforms.RandScaleCropd(keys='image', roi_scale=local_crops_scale[0] / 0.4, max_roi_scale=1.,
+                                      random_size=True, random_center=True),
+            transforms.Resized(keys='image', spatial_size=(96, 96), mode='bicubic'),
+
+        ])
+        self.local_transform = self.local_transform.set_random_state(seed)
+
+    def __call__(self, image):
+        crops = []
+        image = {'image': image}
+        crops.append(self.global_transform(image)['image'])
+        crops.append(self.global_transform(image)['image'])
+        for _ in range(self.local_crops_number):
+            crops.append(self.local_transform(image)['image'])
         return crops
 
 
