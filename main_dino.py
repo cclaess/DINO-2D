@@ -160,6 +160,7 @@ def train_dino(args):
     ])
 
     images = glob(os.path.join(args.data_path, '*.nii.gz'))
+    images = [{'image': image} for image in images]
 
     dataset = data.Dataset(
         data=images,
@@ -519,7 +520,6 @@ class DataAugmentationDINOnew(object):
 
     def __call__(self, image):
         crops = []
-        image = {'image': image}
         crops.append(self.global_transform(image)['image'])
         crops.append(self.global_transform(image)['image'])
         for _ in range(self.local_crops_number):
