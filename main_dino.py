@@ -160,11 +160,11 @@ def train_dino(args):
     ])
 
     images = glob(os.path.join(args.data_path, '*.nii.gz'))
-    images = [{'image': image} for image in images]
+    #images = [{'image': image} for image in images]
 
     dataset = data.Dataset(
         data=images,
-        transform=transform_new,
+        transform=transform,
     )
     sampler = data.DistributedSampler(dataset, shuffle=True)
     loader = data.DataLoader(
