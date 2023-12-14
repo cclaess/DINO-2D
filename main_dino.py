@@ -109,8 +109,7 @@ def get_args_parser():
     parser.add_argument('--saveckp_freq', default=20, type=int, help='Save checkpoint every x epochs.')
     parser.add_argument('--seed', default=0, type=int, help='Random seed.')
     parser.add_argument('--pretrained', type=utils.bool_flag, default=False, help="""Use a pretrained model.""")
-    parser.add_argument('--pretrained_weights', default='', type=str, help="""Path to pretrained weights to start 
-        from.""")
+    parser.add_argument('--pretrained_weights', default='', type=str, help="""Path to pretrained weights.""")
     parser.add_argument('--checkpoint_key', default='teacher', type=str, help="""Key to use in the checkpoint.""")
     parser.add_argument('--num_workers', default=10, type=int, help='Number of data loading workers per GPU.')
     parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
@@ -182,8 +181,10 @@ def train_dino(args):
         sys.exit(1)
 
     if args.pretrained:
-        utils.load_pretrained_weights(student, args.pretrained_weights, args.checkpoint_key, args.arch, args.patch_size)
-        utils.load_pretrained_weights(teacher, args.pretrained_weights, args.checkpoint_key, args.arch, args.patch_size)
+        utils.load_pretrained_weights(student, args.pretrained_weights, args.checkpoint_key, args.arch,
+                                      args.patch_size, remove_norm=True)
+        utils.load_pretrained_weights(teacher, args.pretrained_weights, args.checkpoint_key, args.arch,
+                                      args.patch_size, remove_norm=True)
 
     # multi-crop wrapper handles forward with inputs of different resolutions
     student = utils.MultiCropWrapper(

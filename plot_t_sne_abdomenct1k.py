@@ -22,7 +22,7 @@ def main(args):
     # define the model and load pretrained weights
     if args.arch in vits.__dict__.keys():
         model = vits.__dict__[args.arch](
-            in_chans=1,
+            in_chans=3,
             patch_size=args.patch_size,
             num_classes=0)
         embed_dim = model.embed_dim
@@ -52,9 +52,9 @@ def main(args):
     with torch.no_grad():
         for idx, image_pth in enumerate(image_pths):
             if torch.cuda.is_available():
-                image = transform(image_pth).unsqueeze(0).cuda()
+                image = transform(image_pth).unsqueeze(0).repeat(1, 3, 1, 1).cuda()
             else:
-                image = transform(image_pth).unsqueeze(0)
+                image = transform(image_pth).unsqueeze(0).repeat(1, 3, 1, 1)
             out = model(image).cpu()  # model.forward_features(image)['x_norm_clstoken'].cpu()
 
             features[idx, :] = out

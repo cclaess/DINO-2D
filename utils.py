@@ -16,7 +16,7 @@ import torch.distributed as dist
 from monai.utils import set_determinism
 
 
-def load_pretrained_weights(model, pretrained_weights, checkpoint_key, model_name, patch_size):
+def load_pretrained_weights(model, pretrained_weights, checkpoint_key, model_name, patch_size, remove_norm=False):
     if os.path.isfile(pretrained_weights):
         state_dict = torch.load(pretrained_weights, map_location="cpu")
         if checkpoint_key is not None and checkpoint_key in state_dict:
@@ -26,6 +26,11 @@ def load_pretrained_weights(model, pretrained_weights, checkpoint_key, model_nam
         state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
         # remove `backbone.` prefix induced by multicrop wrapper
         state_dict = {k.replace("backbone.", ""): v for k, v in state_dict.items()}
+        if remove_norm:
+            # remove normalization parameters from state dict
+            for k in list(state_dict.keys()):
+                if "norm" in k:
+                    _ = state_dict.pop(k)
         msg = model.load_state_dict(state_dict, strict=False)
         print('Pretrained weights found at {} and loaded with msg: {}'.format(pretrained_weights, msg))
     else:
@@ -52,7 +57,14 @@ def load_pretrained_weights(model, pretrained_weights, checkpoint_key, model_nam
         if url is not None:
             print("Since no pretrained weights have been provided, we load the reference pretrained DINO weights.")
             state_dict = torch.hub.load_state_dict_from_url(url="https://dl.fbaipublicfiles.com/dino/" + url)
-            model.load_state_dict(state_dict, strict=True)
+            if remove_norm:
+                # remove normalization parameters from state dict
+                for k in list(state_dict.keys()):
+                    if "norm" in k:
+                        _ = state_dict.pop(k)
+                model.load_state_dict(state_dict, strict=False)
+            else:
+                model.load_state_dict(state_dict, strict=True)
         else:
             print("There is no reference weights available for this model => We use random weights.")
 
