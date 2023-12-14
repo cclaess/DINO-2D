@@ -524,7 +524,7 @@ class DataAugmentationDINOnew(object):
         crops.append(self.global_transform(image)['image'])
         crops.append(self.global_transform(image)['image'])
         for _ in range(self.local_crops_number):
-            crops.append(self.local_transform(image)['image'])
+            crops.append(self.local_transform(image)[0]['image'])
         return crops
 
 
