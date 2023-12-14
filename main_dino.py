@@ -507,10 +507,11 @@ class DataAugmentationDINOnew(object):
         # transformation for the local small crops
         self.local_crops_number = local_crops_number
         self.local_transform = transforms.Compose([
-            transforms.ForegroundMaskd(keys='image', threshold='otsu', invert=True, new_key_prefix='mask'),
-            transforms.RandRotated(keys=['image', 'mask'], range_x=math.pi * (15 / 180), prob=1., keep_size=True),
-            transforms.RandCropByPosNegLabeld(keys='image', label_key='mask', spatial_size=(205, 205), pos=1., neg=0.,),
-            transforms.DeleteItemsd(keys='mask'),
+            transforms.ForegroundMaskd(keys='image', threshold='otsu', invert=True, new_key_prefix='mask_'),
+            transforms.RandRotated(keys=['image', 'mask_image'], range_x=math.pi * (15 / 180), prob=1., keep_size=True),
+            transforms.RandCropByPosNegLabeld(keys='image', label_key='mask_image', spatial_size=(205, 205), pos=1.,
+                                              neg=0.,),
+            transforms.DeleteItemsd(keys='mask_image'),
             transforms.RandScaleCropd(keys='image', roi_scale=local_crops_scale[0] / 0.4, max_roi_scale=1.,
                                       random_size=True, random_center=True),
             transforms.Resized(keys='image', spatial_size=(96, 96), mode='bicubic'),
